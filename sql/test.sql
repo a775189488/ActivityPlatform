@@ -1,1 +1,0 @@
-select user_tab.* from act_user_tab left join user_tab on act_user_tab.user_id=user_tab.id where act_user_tab.act_id=1
