@@ -79,18 +79,17 @@ func TestActivityRepo_GetUserByActivityId(t *testing.T) {
 		Creator:     1,
 		ActType:     1,
 	}
+	if activityRepo.InsertActivity(act) == false {
+		t.Fatalf("insert act(%v) fail", *act)
+	}
 	t.Cleanup(func() {
 		if activityRepo.DeleteActivity(act.Id) == false {
 			t.Fatalf("delete act(%d) fail", act.Id)
 		}
 	})
 
-	if activityRepo.InsertActivity(act) == false {
-		t.Fatalf("insert act(%v) fail", *act)
-	}
-
 	var userList []*model.User
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 15; i++ {
 		obj := &model.User{
 			Aliasname: RandString(5),
 			Username:  RandString(5),
@@ -121,11 +120,15 @@ func TestActivityRepo_GetUserByActivityId(t *testing.T) {
 		}
 	})
 
-	actUsers, err := activityRepo.GetUserByActivityId(act.Id)
+	var total int32
+	actUsers, err := activityRepo.GetUserByActivityId(act.Id, 1, 10, &total)
 	if err != nil {
 		t.Fatalf("get user by activity(%d) fail, err: %v", act.Id, err)
 	}
-	if len(actUsers) != len(userList) {
-		t.Fatalf("hope for %d users, actual %d", len(userList), len(actUsers))
+	if int(total) != len(userList) {
+		t.Fatalf("hope for %d users, actual %d", len(userList), total)
+	}
+	if len(actUsers) != 10 {
+		t.Fatalf("hope for %d users, actual %d", 10, len(actUsers))
 	}
 }

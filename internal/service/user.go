@@ -19,11 +19,15 @@ type IUserSerivce interface {
 	GetUserById(id uint64) (*model.User, error)
 	UpdateUser(id uint64, user *model.User) (*model.User, error)
 	DeleteUser(id uint64) error
+	JoinActivity(userId uint64, actId uint64) error
+	LeaveActivity(userId uint64, actId uint64) error
 }
 
 type UserService struct {
-	Log  logger.ILogger       `inject:""`
-	Repo repository.IUserRepo `inject:""`
+	Log     logger.ILogger               `inject:""`
+	Repo    repository.IUserRepo         `inject:""`
+	AuRepo  repository.IActivityUserRepo `inject:""`
+	ActRepo repository.ActivityRepo      `inject:""`
 }
 
 func (u *UserService) DeleteUser(id uint64) error {
@@ -110,6 +114,22 @@ func (u *UserService) CreateUser(user *model.User) error {
 
 	if err := u.Repo.InsertUser(user); err != nil {
 		u.Log.Errorf("[UserService]create user(%v) fail, err: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (u *UserService) JoinActivity(userId uint64, actId uint64) error {
+	// todo 检查活动有效
+	au := &model.ActivityUser{UserId: userId, ActId: actId}
+	if err := u.AuRepo.InsertActivityUser(au); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *UserService) LeaveActivity(userId uint64, actId uint64) error {
+	if err := u.AuRepo.DeleteActivityUserByActAndUser(userId, actId); err != nil {
 		return err
 	}
 	return nil

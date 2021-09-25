@@ -78,15 +78,23 @@ func (r *ActivityRepo) GetActivityDetail(id uint64) (*model.ActivityDetail, erro
 	return &act, err
 }
 
-func (r *ActivityRepo) GetUserByActivityId(actId uint64) ([]*model.User, error) {
+func (r *ActivityRepo) GetUserByActivityId(actId uint64, page, size int32, total *int32) ([]*model.User, error) {
 	var users []*model.User
 	where := map[string]interface{}{"act_id": actId}
-	err := r.BaseRepo.Source.DB().Table(model.ActivityUser{}.TableName()).Select("user_tab.*").
-		Joins("left join user_tab on act_user_tab.user_id=user_tab.id").Find(&users, where).Error
+	db := r.BaseRepo.Source.DB().Table(model.ActivityUser{}.TableName()).Select("user_tab.*").Joins(
+		"left join user_tab on act_user_tab.user_id=user_tab.id").Where(where)
+	err := db.Count(total).Error
 	if err != nil {
 		return nil, err
 	}
-	return users, err
+	if *total == 0 {
+		return users, nil
+	}
+	err = db.Offset((page - 1) * size).Limit(size).Find(&users).Error
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }
 
 //func (r *ActivityRepo) ListActivityUserById(page, size int32, total *int32, actId uint64) []*model.User {

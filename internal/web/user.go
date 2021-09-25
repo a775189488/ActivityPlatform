@@ -10,6 +10,7 @@ import (
 	"entrytask/internal/conf"
 	"entrytask/internal/service"
 	"entrytask/internal/web/metadata"
+	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
 	"io"
 	"mime/multipart"
@@ -29,6 +30,7 @@ type IUserWeb interface {
 	GetUser(ctx *gin.Context)
 	UpdateUser(ctx *gin.Context)
 	DeleteUser(ctx *gin.Context)
+	JoinActivity(ctx *gin.Context)
 }
 
 type UserWeb struct {
@@ -41,7 +43,11 @@ func (u *UserWeb) Test(ctx *gin.Context) {
 }
 
 func (u *UserWeb) DeleteUser(ctx *gin.Context) {
-	// todo 做权限检查，只允许管理员删除
+	if !perm.PermCheck(ctx, perm.Admin) {
+		u.Log.Errorf("[UserWeb] delete user fail, Unauthorized")
+		resp.RespData(ctx, http.StatusUnauthorized, code2.E5002, "", nil)
+		return
+	}
 	id, err := com.StrTo(ctx.Param("id")).Int()
 	if err != nil {
 		u.Log.Errorf("[UserWeb] get user id fail, err: %v", err)
@@ -56,7 +62,7 @@ func (u *UserWeb) DeleteUser(ctx *gin.Context) {
 }
 
 func (u *UserWeb) UpdateUser(ctx *gin.Context) {
-	// todo 做权限检查，只允许用户自己的账户
+	// todo 做权限检查，只允许用户更新自己的账户
 	id, err := com.StrTo(ctx.Param("id")).Int()
 	if err != nil {
 		u.Log.Errorf("[UserWeb] get user id fail, err: %v", err)
@@ -177,4 +183,40 @@ func (u *UserWeb) UploadImage(ctx *gin.Context) {
 	u.Log.Infof("upload file success, filename:%s, pathAppend:%s, url:%s", filename, pathAppend, path)
 
 	resp.RespSuccess(ctx, "upload success", &metadata.UploadHeadpicResp{FilePath: pathAppend})
+}
+
+func (u *UserWeb) JoinActivity(ctx *gin.Context) {
+	userInfo := jwt.ExtractClaims(ctx)
+	userId := int(userInfo["id"].(float64))
+	actId, err := com.StrTo(ctx.Param("id")).Int()
+	if err != nil {
+		u.Log.Errorf("[UserWeb] get activity id fail, err: %v", err)
+		resp.RespData(ctx, http.StatusBadRequest, code2.E6001, "", nil)
+		return
+	}
+	if err := u.UserService.JoinActivity(uint64(userId), uint64(actId)); err != nil {
+		u.Log.Errorf("[UserWeb] join activity(%d) fail, err: %v", actId, err)
+		resp.RespData(ctx, http.StatusBadRequest, code2.E6001, "", nil)
+		return
+	}
+
+	resp.RespSuccess(ctx, "join activity success", nil)
+}
+
+func (u *UserWeb) LeaveActivity(ctx *gin.Context) {
+	userInfo := jwt.ExtractClaims(ctx)
+	userId := int(userInfo["id"].(float64))
+	actId, err := com.StrTo(ctx.Param("id")).Int()
+	if err != nil {
+		u.Log.Errorf("[UserWeb] get activity id fail, err: %v", err)
+		resp.RespData(ctx, http.StatusBadRequest, code2.E6001, "", nil)
+		return
+	}
+	if err := u.UserService.LeaveActivity(uint64(userId), uint64(actId)); err != nil {
+		u.Log.Errorf("[UserWeb] join activity(%d) fail, err: %v", actId, err)
+		resp.RespData(ctx, http.StatusBadRequest, code2.E6001, "", nil)
+		return
+	}
+
+	resp.RespSuccess(ctx, "join activity success", nil)
 }

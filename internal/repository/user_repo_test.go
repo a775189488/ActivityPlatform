@@ -205,6 +205,70 @@ func TestUserRepo_CheckUserPasswordFail(t *testing.T) {
 	})
 }
 
+func TestUserRepo_ListUserActivity(t *testing.T) {
+	userObj := &model.User{
+		Aliasname: "tony",
+		Username:  RandString(10),
+		Password:  "1234456",
+		Email:     "123@qq.com",
+		Headpic:   "/home/a.jpg",
+		Role:      0,
+	}
+	if userRepo.InsertUser(userObj) != nil {
+		t.Fatal("insert user fail")
+	}
+	t.Cleanup(func() {
+		if err := userRepo.DeleteUser(userObj.Id); err != nil {
+			t.Fatalf("delete user(%v) fail", userObj)
+		}
+	})
+
+	var actList []*model.Activity
+	for i := 0; i < 15; i++ {
+		act := &model.Activity{
+			Title:       RandString(10),
+			BeginAt:     111111,
+			EndAt:       22222,
+			Address:     RandString(10),
+			Description: RandString(10),
+			Creator:     1,
+			ActType:     1,
+		}
+		actList = append(actList, act)
+		if activityRepo.InsertActivity(act) == false {
+			t.Fatalf("insert act(%v) fail", *act)
+		}
+		actUserObj := &model.ActivityUser{ActId: act.Id, UserId: userObj.Id}
+		if err := activityUserRepo.InsertActivityUser(actUserObj); err != nil {
+			t.Fatalf("insert act user(%v) fail, err: %v", actUserObj, err)
+		}
+	}
+	t.Cleanup(func() {
+		if err := activityUserRepo.DeleteActivityUserByUserId(userObj.Id); err != nil {
+			t.Fatalf("delete act user(%d) fail, err: %v", userObj.Id, err)
+		}
+	})
+	t.Cleanup(func() {
+		for _, a := range actList {
+			if activityRepo.DeleteActivity(a.Id) == false {
+				t.Fatalf("delete act(%v) fail", a.Id)
+			}
+		}
+	})
+
+	var total int32
+	acts, err := userRepo.ListUserActivity(1, 10, &total, userObj.Id)
+	if err != nil {
+		t.Fatalf("list user(%d) activity fail, err: %v", userObj.Id, err)
+	}
+	if int(total) != len(actList) {
+		t.Fatalf("hope for %d users, actual %d", len(actList), total)
+	}
+	if len(acts) != 10 {
+		t.Fatalf("hope for %d users, actual %d", 10, len(acts))
+	}
+}
+
 func RandString(len int) string {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	bytes := make([]byte, len)
