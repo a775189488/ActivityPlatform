@@ -101,7 +101,8 @@ func (u *UserWeb) Register(ctx *gin.Context) {
 	// todo 参数校验
 	if err := ctx.ShouldBind(&userReq); err != nil {
 		u.Log.Errorf("[UserWeb] bind userReq object fail, err: %v", err)
-		resp.RespData(ctx, http.StatusBadRequest, code2.E6001, "", nil)
+		resp.RespData(ctx, http.StatusBadRequest, code2.E6002, "", nil)
+		return
 	}
 	user := userReq.ToUser()
 	err := u.UserService.CreateUser(user)

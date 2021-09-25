@@ -27,7 +27,7 @@ type UserService struct {
 	Log     logger.ILogger               `inject:""`
 	Repo    repository.IUserRepo         `inject:""`
 	AuRepo  repository.IActivityUserRepo `inject:""`
-	ActRepo repository.ActivityRepo      `inject:""`
+	ActRepo repository.IActivityRepo     `inject:""`
 }
 
 func (u *UserService) DeleteUser(id uint64) error {

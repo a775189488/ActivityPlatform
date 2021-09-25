@@ -44,9 +44,9 @@ type Database struct {
 	Password    string `yaml:"password"`
 	Host        string `yaml:"host"`
 	Name        string `yaml:"name"`
-	SqlOutput   bool   `json:"sql-output"`
-	MaxIdleConn int    `json:"max-idle-conn"`
-	MaxOpenConn int    `json:"max-open-conn"`
+	SqlOutput   bool   `yaml:"sql-output"`
+	MaxIdleConn int    `yaml:"max-idle-conn"`
+	MaxOpenConn int    `yaml:"max-open-conn"`
 }
 
 func getConf(configPath string) *Conf {

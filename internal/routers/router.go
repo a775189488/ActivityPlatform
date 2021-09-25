@@ -38,6 +38,11 @@ func Configure(r *gin.Engine) {
 		&inject.Object{Value: &zap},
 		&inject.Object{Value: &myjwt},
 		&inject.Object{Value: &repository.UserRepo{}},
+		&inject.Object{Value: &repository.ActivityRepo{}},
+		&inject.Object{Value: &repository.ActivityTypeRepo{}},
+		&inject.Object{Value: &repository.ActivityUserRepo{}},
+		&inject.Object{Value: &service.ActTypeService{}},
+		&inject.Object{Value: &service.ActService{}},
 		&inject.Object{Value: &service.UserService{}},
 	); err != nil {
 		log.Fatal("inject fatal: ", err)

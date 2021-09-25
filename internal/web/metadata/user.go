@@ -3,11 +3,11 @@ package metadata
 import "entrytask/internal/model"
 
 type UserRegisterReq struct {
-	Username  string `json:"username"`
-	Password  string `json:"password"`
-	Email     string `json:"email"`
-	Aliasname string `json:"aliasname"`
-	Headpic   string `json:"headpic"`
+	Username  string `json:"username" binding:"required"`
+	Password  string `json:"password" binding:"required"`
+	Email     string `json:"email" binding:"required,email"`
+	Aliasname string `json:"aliasname" binding:"required"`
+	Headpic   string `json:"headpic" binding:"required"`
 }
 
 func (u UserRegisterReq) ToUser() *model.User {
