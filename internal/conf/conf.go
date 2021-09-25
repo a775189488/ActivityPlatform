@@ -39,11 +39,14 @@ type App struct {
 }
 
 type Database struct {
-	Type     string `yaml:"type"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
-	Host     string `yaml:"host"`
-	Name     string `yaml:"name"`
+	Type        string `yaml:"type"`
+	User        string `yaml:"user"`
+	Password    string `yaml:"password"`
+	Host        string `yaml:"host"`
+	Name        string `yaml:"name"`
+	SqlOutput   bool   `json:"sql-output"`
+	MaxIdleConn int    `json:"max-idle-conn"`
+	MaxOpenConn int    `json:"max-open-conn"`
 }
 
 func getConf(configPath string) *Conf {

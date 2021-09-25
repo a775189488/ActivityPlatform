@@ -4,7 +4,6 @@ server:
   write-timeout: 60
 
 app:
-  #run-mode:debug/release
   run-mode: debug
   page-size: 10
   log-path: ""
@@ -18,3 +17,6 @@ database:
   password: Admin@123
   host: 127.0.0.1:3306
   name: entrytask_activity_platform_db
+  sql-output: false
+  max-idle-conn: 10
+  max-open-conn: 100

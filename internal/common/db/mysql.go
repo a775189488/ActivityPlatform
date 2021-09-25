@@ -36,13 +36,10 @@ func (d *DbMysql) Connect() error {
 		return defaultTableName
 	}
 
-	// todo 以下的配置写到配置文件中
-	// 不打印sql语句
-	db.LogMode(false)
-	db.SingularTable(true)
+	db.LogMode(conf.SqlOutput)
 	// 设置最大最小连接数
-	db.DB().SetMaxIdleConns(10)
-	db.DB().SetMaxOpenConns(100)
+	db.DB().SetMaxIdleConns(conf.MaxIdleConn)
+	db.DB().SetMaxOpenConns(conf.MaxOpenConn)
 
 	d.Conn = db
 
