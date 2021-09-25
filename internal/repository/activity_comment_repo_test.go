@@ -1,0 +1,3 @@
+package repository
+
+var activityCommentRepo ActivityCommentRepo

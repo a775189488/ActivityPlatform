@@ -1,0 +1,20 @@
+server:
+  port: 8080
+  read-timeout: 60
+  write-timeout: 60
+
+app:
+  #run-mode:debug/release
+  run-mode: debug
+  page-size: 10
+  log-path: ""
+  identity-key: idname
+  aes-key: 1234567887654321
+  file-path: "/home/file"
+
+database:
+  type: mysql
+  user: root
+  password: Admin@123
+  host: 127.0.0.1:3306
+  name: entrytask_activity_platform_db
