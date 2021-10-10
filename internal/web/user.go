@@ -31,6 +31,7 @@ type IUserWeb interface {
 	UpdateUser(ctx *gin.Context)
 	DeleteUser(ctx *gin.Context)
 	JoinActivity(ctx *gin.Context)
+	GetUserActivity(ctx *gin.Context)
 }
 
 type UserWeb struct {
@@ -52,6 +53,7 @@ func (u *UserWeb) DeleteUser(ctx *gin.Context) {
 	if err != nil {
 		u.Log.Errorf("[UserWeb] get user id fail, err: %v", err)
 		resp.RespData(ctx, http.StatusBadRequest, code2.E6001, "", nil)
+		return
 	}
 	err = u.UserService.DeleteUser(uint64(id))
 	if err != nil {
@@ -98,7 +100,6 @@ func (u *UserWeb) GetUser(ctx *gin.Context) {
 
 func (u *UserWeb) Register(ctx *gin.Context) {
 	var userReq metadata.UserRegisterReq
-	// todo 参数校验
 	if err := ctx.ShouldBind(&userReq); err != nil {
 		u.Log.Errorf("[UserWeb] bind userReq object fail, err: %v", err)
 		resp.RespData(ctx, http.StatusBadRequest, code2.E6002, "", nil)
@@ -219,5 +220,26 @@ func (u *UserWeb) LeaveActivity(ctx *gin.Context) {
 		return
 	}
 
-	resp.RespSuccess(ctx, "join activity success", nil)
+	resp.RespSuccess(ctx, "leave activity success", nil)
+}
+
+func (u *UserWeb) GetUserActivity(ctx *gin.Context) {
+	id, err := com.StrTo(ctx.Param("id")).Int()
+	if err != nil {
+		u.Log.Errorf("[UserWeb] format user id fail, err: %v", err)
+		resp.RespData(ctx, http.StatusBadRequest, code2.E6001, "", nil)
+		return
+	}
+	var userActReq metadata.ListUserActReq
+	if err := ctx.BindQuery(&userActReq); err != nil {
+		u.Log.Errorf("[UserWeb] bind actUserReq object fail, err: %v", err)
+		resp.RespData(ctx, http.StatusBadRequest, code2.E6002, "", nil)
+		return
+	}
+	acts, err := u.UserService.GetActivityByUserId(userActReq.Page, userActReq.Size, uint64(id))
+	if err != nil {
+		handleError(ctx, err)
+	} else {
+		resp.RespSuccess(ctx, "get user activity success", metadata.FormateGetUserActResp(acts, int(userActReq.Page), int(userActReq.Size)))
+	}
 }

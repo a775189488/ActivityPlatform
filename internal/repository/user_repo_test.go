@@ -235,7 +235,7 @@ func TestUserRepo_ListUserActivity(t *testing.T) {
 			ActType:     1,
 		}
 		actList = append(actList, act)
-		if activityRepo.InsertActivity(act) == false {
+		if activityRepo.InsertActivity(act) != nil {
 			t.Fatalf("insert act(%v) fail", *act)
 		}
 		actUserObj := &model.ActivityUser{ActId: act.Id, UserId: userObj.Id}
@@ -250,7 +250,7 @@ func TestUserRepo_ListUserActivity(t *testing.T) {
 	})
 	t.Cleanup(func() {
 		for _, a := range actList {
-			if activityRepo.DeleteActivity(a.Id) == false {
+			if activityRepo.DeleteActivity(a.Id) != nil {
 				t.Fatalf("delete act(%v) fail", a.Id)
 			}
 		}

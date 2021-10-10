@@ -82,6 +82,28 @@ func (b *BaseRepo) GetPages(model interface{}, out interface{}, pageIndex int32,
 	return db.Offset((pageIndex - 1) * pageSize).Limit(pageSize).Find(out).Error
 }
 
+// GetPagesNotCount 用于跑性能
+func (b *BaseRepo) GetPagesNotCount(model interface{}, out interface{}, pageIndex int32, pageSize int32, where interface{}, orders ...string) error {
+	db := b.Source.DB().Model(model).Where(model)
+	where_ := make(map[string]interface{})
+	if where != nil {
+		for k, v := range where.(map[string]interface{}) {
+			where_[utils.Camel2Case(k)] = v
+		}
+	}
+	db = db.Where(where_)
+	if len(orders) > 0 {
+		for _, order := range orders {
+			db = db.Order(order)
+		}
+	}
+	return db.Offset((pageIndex - 1) * pageSize).Limit(pageSize).Find(out).Error
+}
+
+func (b *BaseRepo) GetCount(model interface{}, where interface{}, totalCount *int32) error {
+	return b.Source.DB().Model(model).Where(where).Count(totalCount).Error
+}
+
 func (b *BaseRepo) FirstByID(out interface{}, id uint64) error {
 	return b.Source.DB().First(out, id).Error
 }

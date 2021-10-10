@@ -11,6 +11,9 @@ import (
 	"flag"
 	"github.com/facebookgo/inject"
 	"log"
+	"math/rand"
+	"runtime"
+	"sync"
 	"time"
 )
 
@@ -25,9 +28,10 @@ var objNum int
 var actionType int
 
 const (
-	UserAction    = 1
-	ActTypeAction = 2
-	ActAction     = 3
+	UserAction       = 1
+	ActTypeAction    = 2
+	ActAction        = 3
+	ActCommentAction = 4
 )
 
 func initCmdLineFlag() {
@@ -43,6 +47,17 @@ func initCmdLineFlag() {
 func toolInit() {
 	initCmdLineFlag()
 	conf2.Confinit(configPath)
+}
+
+func genSigleTestActivity() *model.Activity {
+	return &model.Activity{
+		Title:       utils.RandString(20),
+		Description: utils.RandString(20),
+		Address:     utils.RandString(10),
+		ActType:     uint64(rand.Intn(10) + 1),
+		BeginAt:     uint64(rand.Intn(100000) + 1),
+		EndAt:       uint64(rand.Intn(100000) + 1),
+	}
 }
 
 func genSigleTestUser() *model.User {
@@ -63,10 +78,50 @@ func genSigleTestActType() *model.ActivityType {
 	}
 }
 
+func genSigleTestActComment() *model.ActivityComment {
+	return &model.ActivityComment{
+		UserId:  22,
+		ActId:   12,
+		Message: utils.RandString(10),
+		Parent:  0,
+	}
+}
+
+func createParallel(num int, createFun func(num int)) {
+	var begin = time.Now()
+	cpuCount := runtime.NumCPU()
+	grRunCount := num / cpuCount
+	if num%cpuCount != 0 {
+		grRunCount += 1
+	}
+	var wg sync.WaitGroup
+	for i := 0; i < cpuCount; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			createFun(grRunCount)
+		}()
+	}
+	wg.Wait()
+	end := time.Since(begin)
+	userService.Log.Infof("[TestTool] create %d obj, create func(%v), use time %v", grRunCount*cpuCount, createFun, end)
+}
+
+func createTestAct(num int) {
+	var failCount, successCount int
+	for i := 0; i < num; i++ {
+		tAct := genSigleTestActivity()
+		if err := actService.CreateActivity(tAct); err != nil {
+			failCount++
+			userService.Log.Errorf("[TestTool] create act(%v) fail, err: %v", err)
+		} else {
+			successCount++
+		}
+	}
+}
+
 func createTestUser(num int) {
 	var failCount, successCount int
-	start := time.Now()
-
 	for i := 0; i < num; i++ {
 		tUser := genSigleTestUser()
 		if err := userService.CreateUser(tUser); err != nil {
@@ -76,16 +131,10 @@ func createTestUser(num int) {
 			successCount++
 		}
 	}
-
-	elapsed := time.Since(start)
-	userService.Log.Infof("[TestTool] hope for create %d user, actual success %d,"+
-		" fail %d, waste time %v", num, successCount, failCount, elapsed)
 }
 
 func createTestActionType(num int) {
 	var failCount, successCount int
-	start := time.Now()
-
 	for i := 0; i < num; i++ {
 		tUser := genSigleTestActType()
 		if err := actTypeService.CreateActType(tUser); err != nil {
@@ -95,20 +144,33 @@ func createTestActionType(num int) {
 			successCount++
 		}
 	}
+}
 
-	elapsed := time.Since(start)
-	userService.Log.Infof("[TestTool] hope for create %d activity type, actual success %d,"+
-		" fail %d, waste time %v", num, successCount, failCount, elapsed)
+func createTestActionComment(num int) {
+	var failCount, successCount int
+	for i := 0; i < num; i++ {
+		ac := genSigleTestActComment()
+		if err := actCommentService.CreateActComment(ac); err != nil {
+			failCount++
+			userService.Log.Errorf("[TestTool] create activity comment(%v) fail, err: %v", err)
+		} else {
+			successCount++
+		}
+	}
 }
 
 var userService service.UserService
 var actTypeService service.ActTypeService
+var actCommentService service.ActCommentService
+var actService service.ActService
 
 func main() {
 	toolInit()
 
 	userService = service.UserService{}
 	actTypeService = service.ActTypeService{}
+	actCommentService = service.ActCommentService{}
+	actService = service.ActService{}
 	db := db2.DbMysql{}
 	zap := logger.Logger{}
 	var injector inject.Graph
@@ -117,8 +179,13 @@ func main() {
 		&inject.Object{Value: &zap},
 		&inject.Object{Value: &userService},
 		&inject.Object{Value: &actTypeService},
+		&inject.Object{Value: &actCommentService},
+		&inject.Object{Value: &actService},
 		&inject.Object{Value: &repository.UserRepo{}},
+		&inject.Object{Value: &repository.ActivityRepo{}},
+		&inject.Object{Value: &repository.ActivityUserRepo{}},
 		&inject.Object{Value: &repository.ActivityTypeRepo{}},
+		&inject.Object{Value: &repository.ActivityCommentRepo{}},
 	); err != nil {
 		log.Fatal("inject fatal: ", err)
 	}
@@ -132,9 +199,13 @@ func main() {
 
 	switch actionType {
 	case UserAction:
-		createTestUser(objNum)
+		createParallel(objNum, createTestUser)
 	case ActTypeAction:
-		createTestActionType(objNum)
+		createParallel(objNum, createTestActionType)
+	case ActAction:
+		createParallel(objNum, createTestAct)
+	case ActCommentAction:
+		createParallel(objNum, createTestActionComment)
 	default:
 		log.Fatalf("invalid action type %d", actionType)
 	}

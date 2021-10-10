@@ -28,3 +28,12 @@ func (a *ActivityType) BeforeUpdate(scope *gorm.Scope) error {
 	err := scope.SetColumn("UpdateTime", time.Now().Unix())
 	return err
 }
+
+func (a *ActivityType) CompareAndSwap(at *ActivityType) bool {
+	isSwap := false
+	if a.Name != at.Name {
+		a.Name = at.Name
+		isSwap = true
+	}
+	return isSwap
+}

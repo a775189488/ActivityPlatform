@@ -61,6 +61,11 @@ type UpdateUserReq struct {
 	Headpic   string `json:"headpic"`
 }
 
+type ListUserActReq struct {
+	Page int32 `form:"page" binding:"required"`
+	Size int32 `form:"size" binding:"required"`
+}
+
 func (u *UpdateUserReq) ToUser() *model.User {
 	return &model.User{
 		Email:     u.Email,
@@ -80,10 +85,8 @@ func FormatGetUserResp(user *model.User) *GetUserResp {
 }
 
 type ListUserResp struct {
-	Count int            `json:"count"`
-	Page  int            `json:"page"`
-	Size  int            `json:"size"`
-	Data  []*GetUserResp `json:"data"`
+	ListBase
+	Data []*GetUserResp `json:"data"`
 }
 
 func FormatListUserResp(users []*model.User, total int, page int, size int) *ListUserResp {
@@ -98,9 +101,37 @@ func FormatListUserResp(users []*model.User, total int, page int, size int) *Lis
 		})
 	}
 	return &ListUserResp{
-		total,
-		page,
-		size,
+		ListBase{
+			page,
+			size,
+		},
+		data,
+	}
+}
+
+type GetUserActResp struct {
+	ListBase
+	Data []*GetActResp `json:"data"`
+}
+
+func FormateGetUserActResp(acts []*model.Activity, page int, size int) *GetUserActResp {
+	data := make([]*GetActResp, 0)
+	for _, a := range acts {
+		data = append(data, &GetActResp{
+			Id:          a.Id,
+			Title:       a.Title,
+			BeginAt:     a.BeginAt,
+			EndAt:       a.EndAt,
+			Description: a.Description,
+			Type:        a.ActType,
+			Address:     a.Address,
+		})
+	}
+	return &GetUserActResp{
+		ListBase{
+			page,
+			size,
+		},
 		data,
 	}
 }

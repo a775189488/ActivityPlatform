@@ -7,18 +7,18 @@ import (
 )
 
 type IActivityCommentRepo interface {
-	GetCommentById(id uint64) *model.ActivityComment
-	ListComment(page, size int32, total *int32, where interface{}) []*model.ActivityComment
-	InsertComment(comment *model.ActivityComment) bool
-	UpdateComment(comment *model.ActivityComment) bool
-	DeleteComment(id uint64) bool
+	GetCommentById(id uint64) (*model.ActivityComment, error)
+	ListComment(page, size int32, total *int32, where interface{}) ([]*model.ActivityComment, error)
+	InsertComment(comment *model.ActivityComment) error
+	UpdateComment(comment *model.ActivityComment) error
+	DeleteComment(id uint64) error
 }
 type ActivityCommentRepo struct {
 	Log      logger.ILogger `inject:""`
 	BaseRepo BaseRepo       `inject:"inline"`
 }
 
-func (a *ActivityCommentRepo) GetCommentById(id uint64) *model.ActivityComment {
+func (a *ActivityCommentRepo) GetCommentById(id uint64) (*model.ActivityComment, error) {
 	var actComment model.ActivityComment
 	if err := a.BaseRepo.FirstByID(&actComment, id); err != nil {
 		if err != gorm.ErrRecordNotFound {
@@ -26,41 +26,43 @@ func (a *ActivityCommentRepo) GetCommentById(id uint64) *model.ActivityComment {
 		} else {
 			a.Log.Infof("[ActCommentRepo]get actComment(%d) not found", id)
 		}
+		return nil, err
 	}
-	return &actComment
+
+	return &actComment, nil
 }
 
-func (a *ActivityCommentRepo) ListComment(page, size int32, total *int32, where interface{}) []*model.ActivityComment {
+func (a *ActivityCommentRepo) ListComment(page, size int32, total *int32, where interface{}) ([]*model.ActivityComment, error) {
 	var actComments []*model.ActivityComment
 	if err := a.BaseRepo.GetPages(&model.ActivityComment{}, &actComments, page, size, total, where); err != nil {
 		a.Log.Errorf("[ActCommentRepo]list actComment fail, condition(%v), err: %v", where, err)
+		return nil, err
 	}
-	return actComments
+	return actComments, nil
 }
 
-func (a *ActivityCommentRepo) InsertComment(comment *model.ActivityComment) bool {
+func (a *ActivityCommentRepo) InsertComment(comment *model.ActivityComment) error {
 	if err := a.BaseRepo.Create(comment); err != nil {
 		a.Log.Errorf("[ActCommentRepo]insert actComment(%v) fail, err: %v", *comment, err)
-		return false
+		return err
 	}
-	return true
+	return nil
 }
 
-func (a *ActivityCommentRepo) UpdateComment(comment *model.ActivityComment) bool {
+func (a *ActivityCommentRepo) UpdateComment(comment *model.ActivityComment) error {
 	if err := a.BaseRepo.Source.DB().Model(&comment).Update(comment).Error; err != nil {
 		a.Log.Errorf("[ActCommentRepo]update actComment(%v) fail, err: %v", *comment, err)
-		return false
+		return err
 	}
-	return true
+	return nil
 }
 
-func (a *ActivityCommentRepo) DeleteComment(id uint64) bool {
+func (a *ActivityCommentRepo) DeleteComment(id uint64) error {
 	actComment := model.ActivityComment{}
 	where := &model.ActivityComment{Id: id}
-	if count, err := a.BaseRepo.DeleteByWhere(&actComment, where); err != nil {
+	if _, err := a.BaseRepo.DeleteByWhere(&actComment, where); err != nil {
 		a.Log.Errorf("[ActCommentRepo]delete actComment(%d) fail, err: %v", id, err)
-		return false
-	} else {
-		return count > 0
+		return err
 	}
+	return nil
 }

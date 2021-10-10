@@ -18,6 +18,7 @@ require (
 	github.com/facebookgo/stack v0.0.0-20160209184415-751773369052 // indirect
 	github.com/facebookgo/structtag v0.0.0-20150214074306-217e25fb9691 // indirect
 	github.com/facebookgo/subset v0.0.0-20200203212716-c811ad88dec4 // indirect
+	github.com/gin-contrib/pprof v1.3.0
 	github.com/jolestar/go-commons-pool/v2 v2.1.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/unknwon/com v1.0.1

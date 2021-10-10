@@ -9,10 +9,11 @@ import (
 
 type IActivityTypeRepo interface {
 	GetActivityTypeById(id uint64) (*model.ActivityType, error)
-	ListActivityType(page, size int32, total *int32, where interface{}) []*model.ActivityType
+	ListActivityType(page, size int32, total *int32, where interface{}) ([]*model.ActivityType, error)
 	InsertActivityType(actType *model.ActivityType) error
-	UpdateActivityType(actType *model.ActivityType) bool
-	DeleteActivityType(id uint64) bool
+	UpdateActivityType(actType *model.ActivityType) error
+	DeleteActivityType(id uint64) error
+	GetActCountByActType(id uint64) (int, error)
 }
 
 type ActivityTypeRepo struct {
@@ -34,12 +35,13 @@ func (a *ActivityTypeRepo) GetActivityTypeById(id uint64) (*model.ActivityType, 
 	return &actType, nil
 }
 
-func (a *ActivityTypeRepo) ListActivityType(page, size int32, total *int32, where interface{}) []*model.ActivityType {
+func (a *ActivityTypeRepo) ListActivityType(page, size int32, total *int32, where interface{}) ([]*model.ActivityType, error) {
 	var users []*model.ActivityType
 	if err := a.BaseRepo.GetPages(&model.ActivityType{}, &users, page, size, total, where); err != nil {
 		a.Log.Errorf("[ActTypeRepo]list actType fail, condition(%v), err: %v", where, err)
+		return nil, err
 	}
-	return users
+	return users, nil
 }
 
 func (a *ActivityTypeRepo) InsertActivityType(actType *model.ActivityType) error {
@@ -50,21 +52,29 @@ func (a *ActivityTypeRepo) InsertActivityType(actType *model.ActivityType) error
 	return nil
 }
 
-func (a *ActivityTypeRepo) UpdateActivityType(actType *model.ActivityType) bool {
+func (a *ActivityTypeRepo) UpdateActivityType(actType *model.ActivityType) error {
 	if err := a.BaseRepo.Source.DB().Model(&actType).Update(actType).Error; err != nil {
 		a.Log.Errorf("[ActTypeRepo]update actType(%v) fail, err: %v", *actType, err)
-		return false
+		return err
 	}
-	return true
+	return nil
 }
 
-func (a *ActivityTypeRepo) DeleteActivityType(id uint64) bool {
+func (a *ActivityTypeRepo) DeleteActivityType(id uint64) error {
 	user := model.ActivityType{}
 	where := &model.ActivityType{Id: id}
-	if count, err := a.BaseRepo.DeleteByWhere(&user, where); err != nil {
+	if _, err := a.BaseRepo.DeleteByWhere(&user, where); err != nil {
 		a.Log.Errorf("[ActTypeRepo]delete actType(%d) fail, err: %v", id, err)
-		return false
-	} else {
-		return count > 0
+		return err
 	}
+	return nil
+}
+
+func (a *ActivityTypeRepo) GetActCountByActType(id uint64) (int, error) {
+	var total int32
+	where := &model.Activity{ActType: id}
+	if err := a.BaseRepo.GetCount(model.Activity{}, where, &total); err != nil {
+		return 0, err
+	}
+	return int(total), nil
 }

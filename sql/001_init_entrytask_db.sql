@@ -4,7 +4,7 @@ CREATE DATABASE IF NOT EXISTS entrytask_activity_platform_db
 
 USE entrytask_activity_platform_db;
 
-CREATE TABLE user_tab (
+CREATE TABLE IF NOT EXISTS user_tab (
 	id bigint(20) unsigned PRIMARY KEY AUTO_INCREMENT,
 	aliasname varchar(64) NOT NULL,
 	username varchar(64) NOT NULL UNIQUE,
@@ -20,7 +20,7 @@ CREATE TABLE user_tab (
     INDEX idx_username (`username`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE act_tab (
+CREATE TABLE IF NOT EXISTS act_tab (
 	id bigint(20) unsigned PRIMARY KEY AUTO_INCREMENT,
 	title varchar(128) NOT NULL,
 	begin_at int unsigned NOT NULL,
@@ -37,7 +37,7 @@ CREATE TABLE act_tab (
 	INDEX idx_type_begin_at (`act_type`,`begin_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE comment_tab (
+CREATE TABLE IF NOT EXISTS comment_tab (
 	id bigint(20) unsigned PRIMARY KEY AUTO_INCREMENT,
 	act_id bigint(20) unsigned NOT NULL,
 	user_id bigint(20) unsigned NOT NULL,
@@ -49,7 +49,7 @@ CREATE TABLE comment_tab (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 # use for recording the relationship of user and activity
-CREATE TABLE act_user_tab (
+CREATE TABLE IF NOT EXISTS act_user_tab (
 	id bigint(20) unsigned PRIMARY KEY AUTO_INCREMENT,
 	act_id bigint(20) unsigned NOT NULL,   # activity id
 	user_id bigint(20) unsigned NOT NULL,  # user id
@@ -59,7 +59,7 @@ CREATE TABLE act_user_tab (
 	INDEX idx_act_id (`act_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE act_type_tab (
+CREATE TABLE IF NOT EXISTS act_type_tab (
 	id bigint(20) unsigned PRIMARY KEY AUTO_INCREMENT,
 	name varchar(64) NOT NULL,
 	parent bigint(20) unsigned NOT NULL, # parent activity type id

@@ -51,7 +51,6 @@ type Database struct {
 
 func getConf(configPath string) *Conf {
 	var c *Conf
-	// todo 做成传入式
 	file, err := ioutil.ReadFile(configPath)
 	if err != nil {
 		log.Fatalf("[Setting] config error: %v", err)

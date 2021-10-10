@@ -31,7 +31,7 @@ type JwtAuthorizator func(data interface{}, c *gin.Context) bool
 
 func (j *Jwt) GinJWTMiddlewareInit(jwtAuthorizator JwtAuthorizator) (authMiddleware *jwt.GinJWTMiddleware) {
 	authMiddleware, err := jwt.New(&jwt.GinJWTMiddleware{
-		Realm:       "test zone",
+		Realm:       "entrytask",
 		Key:         []byte("secret key"),
 		Timeout:     time.Minute * 60,
 		MaxRefresh:  time.Hour,

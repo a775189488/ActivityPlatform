@@ -9,6 +9,8 @@ const (
 	E1001 ErrCode = 10001
 	E1002 ErrCode = 10002
 	E1003 ErrCode = 10003
+	E1004 ErrCode = 10004
+	E1005 ErrCode = 10005
 
 	// about act
 	E2001 ErrCode = 20001
@@ -16,9 +18,11 @@ const (
 	// about actType
 	E3001 ErrCode = 30001
 	E3002 ErrCode = 30002
+	E3003 ErrCode = 30003
 
 	// about comment
 	E4001 ErrCode = 40001
+	E4002 ErrCode = 40002
 
 	// about auth
 	E5001 ErrCode = 50001
@@ -34,12 +38,20 @@ const (
 var ErrCodeMap = map[ErrCode]string{
 	E0000: "成功",
 
+	E2001: "找不到对应的活动类型",
+
 	E1001: "用户名冲突",
 	E1002: "找不到对应用户",
 	E1003: "用户密码错误",
+	E1004: "用户已加入指定活动",
+	E1005: "用户未加入指定活动",
 
 	E3001: "找不到对应活动类型",
 	E3002: "找不到对应的父类型",
+	E3003: "该类型下存在活动，不允许删除",
+
+	E4001: "找不到对应的活动实例",
+	E4002: "找不到对应的用户实例",
 
 	E5001: "未授权",
 	E5002: "权限不足",

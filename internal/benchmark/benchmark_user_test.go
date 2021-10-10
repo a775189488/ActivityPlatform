@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	userSize   = 20000
+	userSize   = 10000
 	clientSize = 200
 )
 

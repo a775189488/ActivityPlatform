@@ -30,3 +30,12 @@ func (a *ActivityComment) BeforeUpdate(scope *gorm.Scope) error {
 	err := scope.SetColumn("UpdateTime", time.Now().Unix())
 	return err
 }
+
+func (a *ActivityComment) CompareAndSwap(ac *ActivityComment) bool {
+	isSwap := false
+	if a.Message != ac.Message {
+		a.Message = ac.Message
+		isSwap = true
+	}
+	return isSwap
+}

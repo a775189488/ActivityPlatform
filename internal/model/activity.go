@@ -13,13 +13,11 @@ type Activity struct {
 	EndAt       uint64 `json:"end_at"`
 	Description string `json:"description"`
 	Creator     uint64 `json:"creator"`
-	// todo 需要转换成实际的活动类型
-	ActType uint64 `json:"act_type"`
-	Address string `json:"address"`
-	status  int    `json:"status"`
-	// todo 需要将这两个时间转成time返回给前端
-	CreateTime uint64 `json:"create_time"`
-	UpdateTime uint64 `json:"update_time"`
+	ActType     uint64 `json:"act_type"`
+	Address     string `json:"address"`
+	Statue      int    `json:"status"`
+	CreateTime  uint64 `json:"create_time"`
+	UpdateTime  uint64 `json:"update_time"`
 }
 
 type ActivityDetail struct {
@@ -40,4 +38,29 @@ func (a *Activity) BeforeCreate(scope *gorm.Scope) error {
 func (a *Activity) BeforeUpdate(scope *gorm.Scope) error {
 	err := scope.SetColumn("UpdateTime", time.Now().Unix())
 	return err
+}
+
+func (a *Activity) CompareAndSwap(act *Activity) bool {
+	isSwap := false
+	if a.Title != act.Title {
+		a.Title = act.Title
+		isSwap = true
+	}
+	if a.Description != act.Description {
+		a.Description = act.Description
+		isSwap = true
+	}
+	if a.ActType != act.ActType {
+		a.ActType = act.ActType
+		isSwap = true
+	}
+	if a.BeginAt != act.BeginAt {
+		a.BeginAt = act.BeginAt
+		isSwap = true
+	}
+	if a.EndAt != act.EndAt {
+		a.EndAt = act.EndAt
+		isSwap = true
+	}
+	return isSwap
 }

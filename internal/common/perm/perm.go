@@ -20,3 +20,12 @@ func PermCheck(ctx *gin.Context, needPerm PermType) bool {
 	}
 	return true
 }
+
+func GetUserIdFromCtx(ctx *gin.Context) uint64 {
+	userInfo := jwt.ExtractClaims(ctx)
+	if userInfo["id"] == nil {
+		return 0
+	}
+	userId := uint64(int(userInfo["id"].(float64)))
+	return userId
+}

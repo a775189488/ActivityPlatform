@@ -15,7 +15,7 @@ type IUserRepo interface {
 	UpdateUser(user *model.User) error
 	DeleteUser(id uint64) error
 	GetUserCountByUsername(username string) (int, error)
-	ListUserActivity(page, size int32, total *int32, userId uint64) ([]*model.Activity, error)
+	ListUserActivity(page, size int32, userId uint64) ([]*model.Activity, error)
 }
 
 type UserRepo struct {
@@ -86,19 +86,12 @@ func (r *UserRepo) GetUserCountByUsername(username string) (int, error) {
 	return count, nil
 }
 
-func (r *UserRepo) ListUserActivity(page, size int32, total *int32, userId uint64) ([]*model.Activity, error) {
+func (r *UserRepo) ListUserActivity(page, size int32, userId uint64) ([]*model.Activity, error) {
 	var acts []*model.Activity
 	where := map[string]interface{}{"user_id": userId}
 	db := r.BaseRepo.Source.DB().Table(model.ActivityUser{}.TableName()).Select("act_tab.*").Joins(
 		"left join act_tab on act_user_tab.act_id=act_tab.id").Where(where)
-	err := db.Count(total).Error
-	if err != nil {
-		return nil, err
-	}
-	if *total == 0 {
-		return acts, nil
-	}
-	err = db.Offset((page - 1) * size).Limit(size).Find(&acts).Error
+	err := db.Offset((page - 1) * size).Limit(size).Find(&acts).Error
 	if err != nil {
 		return nil, err
 	}

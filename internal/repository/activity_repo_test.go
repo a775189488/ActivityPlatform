@@ -18,15 +18,18 @@ func TestActivityRepo_InsertActivity(t *testing.T) {
 		ActType:     1,
 	}
 
-	if activityRepo.InsertActivity(act) == false {
+	if activityRepo.InsertActivity(act) != nil {
 		t.Fatalf("insert act(%v) fail", *act)
 	}
 	t.Cleanup(func() {
-		if activityRepo.DeleteActivity(act.Id) == false {
+		if activityRepo.DeleteActivity(act.Id) != nil {
 			t.Fatalf("delete act(%d) fail", act.Id)
 		}
 	})
-	newObj := activityRepo.GetActivityById(act.Id)
+	newObj, err := activityRepo.GetActivityById(act.Id)
+	if err != nil {
+		t.Fatalf("get activity id(%d) fail, err: %v", act.Id, err)
+	}
 	if newObj.Title != act.Title {
 		t.Fatalf("need (%s), actual (%s)", act.Title, newObj.Title)
 	}
@@ -52,11 +55,11 @@ func TestActivityRepo_GetActivityDetail(t *testing.T) {
 		Creator:     1,
 		ActType:     actType.Id,
 	}
-	if activityRepo.InsertActivity(act) == false {
+	if activityRepo.InsertActivity(act) != nil {
 		t.Fatalf("insert act(%v) fail", *act)
 	}
 	t.Cleanup(func() {
-		if activityRepo.DeleteActivity(act.Id) == false {
+		if activityRepo.DeleteActivity(act.Id) != nil {
 			t.Fatalf("delete act(%d) fail", act.Id)
 		}
 	})
@@ -69,7 +72,7 @@ func TestActivityRepo_GetActivityDetail(t *testing.T) {
 	}
 }
 
-func TestActivityRepo_GetUserByActivityId(t *testing.T) {
+func TestActivityRepo_ListActivityUserById(t *testing.T) {
 	act := &model.Activity{
 		Title:       "test",
 		BeginAt:     111111,
@@ -79,11 +82,11 @@ func TestActivityRepo_GetUserByActivityId(t *testing.T) {
 		Creator:     1,
 		ActType:     1,
 	}
-	if activityRepo.InsertActivity(act) == false {
+	if activityRepo.InsertActivity(act) != nil {
 		t.Fatalf("insert act(%v) fail", *act)
 	}
 	t.Cleanup(func() {
-		if activityRepo.DeleteActivity(act.Id) == false {
+		if activityRepo.DeleteActivity(act.Id) != nil {
 			t.Fatalf("delete act(%d) fail", act.Id)
 		}
 	})
@@ -121,7 +124,7 @@ func TestActivityRepo_GetUserByActivityId(t *testing.T) {
 	})
 
 	var total int32
-	actUsers, err := activityRepo.GetUserByActivityId(act.Id, 1, 10, &total)
+	actUsers, err := activityRepo.ListActivityUserById(1, 10, &total, act.Id)
 	if err != nil {
 		t.Fatalf("get user by activity(%d) fail, err: %v", act.Id, err)
 	}

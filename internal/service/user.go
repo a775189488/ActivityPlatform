@@ -21,6 +21,7 @@ type IUserSerivce interface {
 	DeleteUser(id uint64) error
 	JoinActivity(userId uint64, actId uint64) error
 	LeaveActivity(userId uint64, actId uint64) error
+	GetActivityByUserId(page, size int32, userId uint64) ([]*model.Activity, error)
 }
 
 type UserService struct {
@@ -121,16 +122,46 @@ func (u *UserService) CreateUser(user *model.User) error {
 
 func (u *UserService) JoinActivity(userId uint64, actId uint64) error {
 	// todo 检查活动有效
+	u.Log.Infof("[UserService]user(%d) join activity(%d)", userId, actId)
+	isJoin, err := u.AuRepo.CheckActivityUserByActIdAndUserId(actId, userId)
+	if err != nil {
+		return err
+	}
+	if isJoin {
+		return error2.UserJoinDupActivityError
+	}
 	au := &model.ActivityUser{UserId: userId, ActId: actId}
-	if err := u.AuRepo.InsertActivityUser(au); err != nil {
+	if err = u.AuRepo.InsertActivityUser(au); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (u *UserService) LeaveActivity(userId uint64, actId uint64) error {
+	u.Log.Infof("[UserService]user(%d) leave activity(%d)", userId, actId)
+	isJoin, err := u.AuRepo.CheckActivityUserByActIdAndUserId(actId, userId)
+	if err != nil {
+		return err
+	}
+	if !isJoin {
+		return error2.UserLeaveNotJoinActivityError
+	}
 	if err := u.AuRepo.DeleteActivityUserByActAndUser(userId, actId); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (u *UserService) GetActivityByUserId(page, size int32, userId uint64) ([]*model.Activity, error) {
+	_, err := u.GetUserById(userId)
+	if err != nil {
+		u.Log.Errorf("[UserService]Get user by id(%d)fail, err: %v", userId, err)
+		return nil, err
+	}
+	acts, err := u.Repo.ListUserActivity(page, size, userId)
+	if err != nil {
+		u.Log.Errorf("[UserService]list user(%d) activity fail, err: %v", userId, err)
+		return nil, err
+	}
+	return acts, nil
 }

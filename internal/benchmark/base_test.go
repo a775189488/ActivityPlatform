@@ -24,10 +24,14 @@ const (
 	httpServerAddr = "http://127.0.0.1:8080"
 
 	userPassword = "PNlwSCDOLpqb6tW40QSbNA=="
+
+	JwtHeaderKey         = "Authorization"
+	JwtHeaderValuePrefix = "Bearer "
 )
 
 type httpClient struct {
 	client *http.Client
+	token  string
 }
 
 type httpClientFactory struct {
@@ -35,9 +39,11 @@ type httpClientFactory struct {
 }
 
 func (f *httpClientFactory) MakeObject(ctx context.Context) (*pool.PooledObject, error) {
+	client, token := initHttpClients(f.login)
 	return pool.NewPooledObject(
 			&httpClient{
-				client: initHttpClients(f.login),
+				client: client,
+				token:  token,
 			}),
 		nil
 }
@@ -68,14 +74,15 @@ func (f *httpClientFactory) PassivateObject(ctx context.Context, object *pool.Po
 	return nil
 }
 
-func initHttpClients(login bool) *http.Client {
+func initHttpClients(login bool) (*http.Client, string) {
 	i := rand.Intn(userSize)
 	client := getClient()
 	// 登录
 	if login {
-		clientLogin(client, users[i])
+		token := clientLogin(client, users[i])
+		return client, token
 	}
-	return client
+	return client, ""
 }
 
 const (
@@ -110,7 +117,16 @@ type UserLoginReq struct {
 	Password string `json:"password";`
 }
 
-func clientLogin(client *http.Client, u *model.User) {
+type loginResp struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    struct {
+		Token  string `json:"token"`
+		Expire string `json:"expire"`
+	} `json:"data"`
+}
+
+func clientLogin(client *http.Client, u *model.User) string {
 	userLoginReq := UserLoginReq{
 		Username: u.Username,
 		Password: userPassword,
@@ -118,7 +134,7 @@ func clientLogin(client *http.Client, u *model.User) {
 	data, errData := json.Marshal(userLoginReq)
 	if errData != nil {
 		logrus.Panicf("json error:%v", u)
-		return
+		return ""
 	}
 	var err error
 	reqUrl := httpServerAddr + "/login"
@@ -130,13 +146,20 @@ func clientLogin(client *http.Client, u *model.User) {
 	body, errBody := ioutil.ReadAll(res.Body)
 	if errBody != nil {
 		logrus.Errorf("get body err:%v", err)
-		return
+		return ""
+	}
+	var loginData loginResp
+	err = json.Unmarshal(body, &loginData)
+	if err != nil {
+		logrus.Errorf("format body err:%v", err)
+		return ""
 	}
 	err = res.Body.Close()
 	if err != nil {
 		logrus.Errorf("close body err:%v", err)
 	}
-	logrus.Debugf("post login response:%v", string(body[:]))
+	logrus.Debugf("post login response:%v", loginData)
+	return loginData.Data.Token
 }
 
 const (
